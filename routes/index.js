@@ -5,7 +5,7 @@ var router = express.Router();
 var Image = require('../models/image');
 
 var multer = require('multer');
-var upload = multer({dest: 'uploads/'});
+var upload = multer({dest: '../public/uploads/'});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
