@@ -7,10 +7,6 @@ var Image = require('../models/image');
 var multer = require('multer');
 var upload = multer({dest: '../public/uploads/'});
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-	res.render('index', { title: 'Express' });
-});
 
 router.get('/api/posts', function(req, res) {
 	Image.find({}, function(err, images) {
