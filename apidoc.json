@@ -1,0 +1,8 @@
+{
+  "name": "exchange-o-gram",
+  "version": "0.0.0.0.0.1",
+  "description": "Image sharing API for Mobile Development Club",
+  "apidoc": {
+    "title": "Exchange-o-gram API Docs"
+  }
+}

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exchange-o-gram - Post submission</title>
+</head>
+<body>
+    <h1>Post submission</h1>
+    <form action="/api/post" method="POST" enctype="multipart/form-data">
+        <label><input type="text" name="caption">Caption</label>
+        <label><input type="text" name="author">Author</label>
+        <label><input type="file" name="image">Image</label>
+        
+        <input type="submit" value="Post">
+    </form>
+</body>
+</html>
