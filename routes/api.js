@@ -1,11 +1,12 @@
 var express = require('express');
+var fs = require('fs');
 var async = require('async');
 var router = express.Router();
 
 var Image = require('../models/image');
 
 var multer = require('multer');
-var upload = multer({dest: '../public/uploads/'});
+var upload = multer({dest: './public/uploads/'});
 
 
 
@@ -14,17 +15,17 @@ var upload = multer({dest: '../public/uploads/'});
  * @apiName GetPosts
  * @apiGroup Posts
  *
- * @apiSuccess {Object[]} posts A list of posts.
+ * @apiSuccess {Post[]} response A list of posts.
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
  *     [
  *          {
  *              "id": "123456789",
-*               "caption": "Caption for the post",
-                "author": "Ian McDowell",
-                "date": "1452794148",
-                "url": "/uploads/asdfgjkl.jpg"
+ *              "caption": "Caption for the post",
+ *              "author": "Ian McDowell",
+ *              "date": "1452794148",
+ *              "url": "/uploads/asdfgjkl.jpg"
  *          },
  *          ...
  *     ]
@@ -48,7 +49,7 @@ router.get('/posts', function(req, res) {
 /**
  * @api {post} /api/post Create a post
  * @apiName Post
- * @apiGroup Post
+ * @apiGroup Posts
  *
  * @apiParam {File} image The image with the post
  * @apiParam {String} caption A caption for the post
@@ -58,31 +59,38 @@ router.get('/posts', function(req, res) {
  *     HTTP/1.1 200 OK
  *
  * @apiError ImageNotFound No image was uploaded with the post
- * @apiError BadParams No caption or author was provided.
+ * @apiError IncorrectImageType The image was not in JPEG format.
+ * @apiError BadParameters No caption or author was provided.
  *
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Bad Request
+ *     {
+ *         "error": "ImageNotFound"
+ *     }
  */
 router.post('/post', upload.single('image'), function(req, res) {
-	if (!req.files) {
-		return res.sendStatus(400);
+
+	if (!req.file) {
+		console.log('/api/post: unable to find image');
+		return req.status(400).json({'error': 'ImageNotFound'});
 	}
 
-	var imageUpload = req.files['image'][0];
-
-	if (!imageUpload) {
-		return req.sendStatus(400);
-	}
+	console.log('/api/post: uploaded file: ', req.file);
+    
+    if (req.file.mimetype !== 'image/jpeg') {
+        console.log('/api/post: wrong image type');
+        return res.status(400).json({'error': 'IncorrectImageType'});
+    }
 
 	var caption = req.body.caption;
 	var author = req.body.author;
 
 	if (!caption || !author) {
-		return res.sendStatus(400);
+		return res.status(400).json({'error': 'BadParameters'});
 	}
 
 	var image = new Image();
-	image.url = '/uploads/'+imageUpload.filename;
+	image.url = '/uploads/' + req.file.filename + '.jpg';
 	image.caption = caption;
 	image.author = author;
 	image.date = new Date();
@@ -90,6 +98,12 @@ router.post('/post', upload.single('image'), function(req, res) {
 	image.save(function(err, image) {
 		return res.sendStatus(200);
 	});
+    
+    fs.rename(req.file.path, req.file.path + '.jpg', function(err) {
+        if (err) {
+            console.error('/api/post: unable to rename image: ', err);
+        }
+    });
 });
 
 module.exports = router;
