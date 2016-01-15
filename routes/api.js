@@ -83,14 +83,13 @@ router.post('/post', upload.single('image'), function(req, res) {
 	}
 
 	console.log('/api/post: uploaded file: ', req.file);
-    
-    // if (req.file.mimetype !== 'image/jpeg') {
-    //     console.log('/api/post: wrong image type');
-    //     return res.status(400).json({'error': 'IncorrectImageType'});
-    // }
+
     sharp(req.file.path)
         .resize(1000,null) // scale it to 500 width, and scale height accordingly
         .toFile(req.file.path + '.jpg', function(err) { 
+            if (err) {
+                return res.status(400).json({'error': 'IncorrectImageType'});
+            }
             
             try {
                 fs.unlinkSync('./public/uploads/'+req.file.filename); // remove initial uploaded image
