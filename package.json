@@ -13,7 +13,8 @@
     "express": "~4.13.1",
     "mongoose": "^4.3.5",
     "morgan": "~1.6.1",
-    "multer": "^1.1.0"
+    "multer": "^1.1.0",
+    "sharp": "^0.12.1"
   },
   "devDependencies": {
     "apidoc": "^0.14.0"

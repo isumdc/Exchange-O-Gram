@@ -1,12 +1,14 @@
-var express = require('express');
-var fs = require('fs');
-var async = require('async');
+var express = require('express'); // routing
 var router = express.Router();
 
-var Image = require('../models/image');
+var fs = require('fs'); // filesystem functions
+var async = require('async'); // asynchronous functions
+var sharp = require('sharp'); // image manipulation
 
-var multer = require('multer');
-var upload = multer({dest: './public/uploads/'});
+var Image = require('../models/image'); // image database schema
+
+var multer = require('multer'); // multipart post requests
+var upload = multer({dest: './public/uploads/'}); // puts uploaded files in that directory
 
 
 
@@ -16,6 +18,11 @@ var upload = multer({dest: './public/uploads/'});
  * @apiGroup Posts
  *
  * @apiSuccess {Post[]} response A list of posts.
+ * @apiSuccess {String} response.id A unique identifier for the post
+ * @apiSuccess {String} response.caption The post's caption
+ * @apiSuccess {String} response.author The author of the post
+ * @apiSuccess {Number} response.date The date (in epoch) that the post was created
+ * @apiSuccess {String} response.url The relative URL pointing to the post's image.
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
@@ -24,7 +31,7 @@ var upload = multer({dest: './public/uploads/'});
  *              "id": "123456789",
  *              "caption": "Caption for the post",
  *              "author": "Ian McDowell",
- *              "date": "1452794148",
+ *              "date": 1452885927,
  *              "url": "/uploads/asdfgjkl.jpg"
  *          },
  *          ...
@@ -77,33 +84,41 @@ router.post('/post', upload.single('image'), function(req, res) {
 
 	console.log('/api/post: uploaded file: ', req.file);
     
-    if (req.file.mimetype !== 'image/jpeg') {
-        console.log('/api/post: wrong image type');
-        return res.status(400).json({'error': 'IncorrectImageType'});
-    }
+    // if (req.file.mimetype !== 'image/jpeg') {
+    //     console.log('/api/post: wrong image type');
+    //     return res.status(400).json({'error': 'IncorrectImageType'});
+    // }
+    sharp(req.file.path)
+        .resize(1000,null) // scale it to 500 width, and scale height accordingly
+        .toFile(req.file.path + '.jpg', function(err) { 
+            
+            try {
+                fs.unlinkSync('./public/uploads/'+req.file.filename); // remove initial uploaded image
+            } catch (error) { }
+            
+            // .toFile converts the file to jpg
+            if (err) {
+                return res.status(400).json({'error': 'IncorrectImageType'});
+            }
+            
+            var caption = req.body.caption;
+            var author = req.body.author;
 
-	var caption = req.body.caption;
-	var author = req.body.author;
+            if (!caption || !author) {
+                return res.status(400).json({'error': 'BadParameters'});
+            }
 
-	if (!caption || !author) {
-		return res.status(400).json({'error': 'BadParameters'});
-	}
+            var image = new Image();
+            image.url = '/uploads/' + req.file.filename + '.jpg';
+            image.caption = caption;
+            image.author = author;
+            image.date = new Date();
 
-	var image = new Image();
-	image.url = '/uploads/' + req.file.filename + '.jpg';
-	image.caption = caption;
-	image.author = author;
-	image.date = new Date();
-
-	image.save(function(err, image) {
-		return res.sendStatus(200);
-	});
-    
-    fs.rename(req.file.path, req.file.path + '.jpg', function(err) {
-        if (err) {
-            console.error('/api/post: unable to rename image: ', err);
-        }
-    });
+            image.save(function(err, image) {
+                
+                return res.sendStatus(200);
+            });
+        });
 });
 
 module.exports = router;
