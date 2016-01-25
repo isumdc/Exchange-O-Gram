@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exchange-o-gram - Posts</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+<body>
+    
+    <h1>Posts</h1>
+    <a href="/create-post.html">Create new post</a>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <td>ID</td>
+                <td>Caption</td>
+                <td>Author</td>
+                <td>Date</td>
+                <td>Image</td>
+                <td>Actions</td>
+            </tr>
+        </thead>
+        <tbody id="posts">
+            
+        </tbody>
+    </table>
+    
+    <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $('#posts').empty();
+        
+        var deletePost = function(e) {
+            e.preventDefault();
+            
+            var postID = $(e.target).attr('data-id');
+            if (postID) {
+                $.ajax({
+                    url: '/api/post',
+                    type: 'DELETE',
+                    data: {
+                        id: postID
+                    }
+                }).done(function() {
+                    $(e.target).closest('tr').remove();
+                });
+            }
+        }
+        
+        $.ajax({
+            url: '/api/posts'
+        }).done(function(posts) {
+            posts.forEach(function(post) {
+                var $tr = $('<tr>');
+                
+                $tr.append($('<td>').text(post.id));
+                $tr.append($('<td>').text(post.caption));
+                $tr.append($('<td>').text(post.author));
+                $tr.append($('<td>').text(post.date));
+                $tr.append($('<td>').append($('<img>').attr('src', post.url).css('max-height', '75px')));
+                
+                var $delete = $('<a>').attr('href', '#').text('Delete').addClass('btn').attr('data-id', post.id);
+                $delete.click(deletePost);
+                $tr.append($('<td>').append($delete));
+                
+                $('#posts').append($tr);
+            });
+        });
+    </script>
+</body>
+</html>

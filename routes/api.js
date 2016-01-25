@@ -79,7 +79,7 @@ router.post('/post', upload.single('image'), function(req, res) {
 
 	if (!req.file) {
 		console.log('/api/post: unable to find image');
-		return req.status(400).json({'error': 'ImageNotFound'});
+		return res.status(400).json({'error': 'ImageNotFound'});
 	}
 
 	console.log('/api/post: uploaded file: ', req.file);
@@ -114,10 +114,34 @@ router.post('/post', upload.single('image'), function(req, res) {
             image.date = new Date();
 
             image.save(function(err, image) {
-                
                 return res.sendStatus(200);
             });
         });
+});
+
+
+router.delete('/post', function(req, res) {
+    var postID = req.body.id;
+    if (!postID) {
+        return res.status(400).send({'error': 'BadParameters'})
+    }
+    
+    Image.findOne({ _id: postID }, function(err, image) {
+        if (!image) {
+            return res.status(400).send({'error': 'NotFound'});
+        }
+        
+        try {
+            fs.unlinkSync('./public'+image.url);
+        } catch(e) { } // might throw exception when image does not exist
+        
+        image.remove(function(err) {
+            if (err) {
+                return res.sendStatus(500);
+            }
+            return res.sendStatus(200);
+        });
+    });
 });
 
 module.exports = router;
